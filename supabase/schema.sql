@@ -55,3 +55,10 @@ drop policy if exists "participants read own messages" on public.messages;
 create policy "participants read own messages" on public.messages for select to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
 drop policy if exists "sender creates message" on public.messages;
 create policy "sender creates message" on public.messages for insert to authenticated with check (auth.uid() = sender_id and sender_id <> recipient_id);
+
+
+-- Realtime for direct messages (safe to run once; ignore duplicate membership if already enabled)
+do $$ begin
+  alter publication supabase_realtime add table public.messages;
+exception when duplicate_object then null;
+end $$;
