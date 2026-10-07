@@ -23,7 +23,7 @@ export default {
 Дай: 1) краткую оценку ситуации без поиска виноватого; 2) спокойный готовый ответ; 3) если вопрос касается прав или обязанностей — только осторожную справочную ориентацию и рекомендацию проверить норму в официальной ИПС "Әділет"; не выдумывай статьи и цитаты; 4) следующий пропорциональный шаг для мирного решения.
 Не ставь диагнозы, не угрожай и не выдавай ответ за юридическую консультацию.`;
 
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(key);
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + encodeURIComponent(key);
       const ai = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
