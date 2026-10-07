@@ -110,3 +110,18 @@ drop policy if exists "members read group messages" on public.group_messages;
 create policy "members read group messages" on public.group_messages for select to authenticated using(exists(select 1 from public.group_members gm where gm.group_id=group_messages.group_id and gm.user_id=auth.uid()));
 drop policy if exists "members send group messages" on public.group_messages;
 create policy "members send group messages" on public.group_messages for insert to authenticated with check(sender_id=auth.uid() and exists(select 1 from public.group_members gm where gm.group_id=group_messages.group_id and gm.user_id=auth.uid()));
+
+
+-- Admin management for class groups
+drop policy if exists "admins create groups" on public.class_groups;
+create policy "admins create groups" on public.class_groups for insert to authenticated
+with check(auth.uid()=created_by and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin'));
+drop policy if exists "admins see all groups" on public.class_groups;
+create policy "admins see all groups" on public.class_groups for select to authenticated
+using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin') or exists(select 1 from public.group_members gm where gm.group_id=id and gm.user_id=auth.uid()));
+drop policy if exists "admins add members" on public.group_members;
+create policy "admins add members" on public.group_members for insert to authenticated
+with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin'));
+drop policy if exists "admins remove members" on public.group_members;
+create policy "admins remove members" on public.group_members for delete to authenticated
+using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin'));
