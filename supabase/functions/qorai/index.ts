@@ -23,26 +23,37 @@ export default {
 Дай: 1) краткую оценку ситуации без поиска виноватого; 2) спокойный готовый ответ; 3) если вопрос касается прав или обязанностей — только осторожную справочную ориентацию и рекомендацию проверить норму в официальной ИПС "Әділет"; не выдумывай статьи и цитаты; 4) следующий пропорциональный шаг для мирного решения.
 Не ставь диагнозы, не угрожай и не выдавай ответ за юридическую консультацию.`;
 
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + encodeURIComponent(key);
-      const ai = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: message.slice(0, 4000) }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 700 }
-        })
-      });
-      const raw = await ai.text();
+      const models = ["gemini-3.5-flash-lite","gemini-3.6-flash","gemini-3.8-flash"];
+      let ai: Response | null = null;
+      let raw = "";
+      let lastStatus = 0;
+      for (const model of models) {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key);
+        ai = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: system }] },
+            contents: [{ role: "user", parts: [{ text: message.slice(0, 4000) }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 700 }
+          })
+        });
+        raw = await ai.text();
+        lastStatus = ai.status;
+        if (ai.ok) break;
+        console.error("Gemini model failed", model, ai.status, raw);
+        if (![429, 503].includes(ai.status)) break;
+      }
+      if (!ai) return Response.json({ error: "AI request was not created." }, { status: 502 });
       if (!ai.ok) {
-        console.error("Gemini error", ai.status, raw);
-        let msg = "Gemini API вернул ошибку " + ai.status;
+        let msg = "Gemini API вернул ошибку " + lastStatus;
         try { msg = JSON.parse(raw)?.error?.message || msg; } catch {}
         return Response.json({ error: msg }, { status: 502 });
       }
       const j = JSON.parse(raw);
       const answer = j?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") || "Gemini не вернул текст.";
       return Response.json({ answer });
+
     } catch (e) {
       console.error("QorAI error", e);
       return Response.json({ error: String((e as Error)?.message || e) }, { status: 500 });
