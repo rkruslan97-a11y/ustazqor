@@ -23,6 +23,11 @@ Deno.serve(async (req) => {
     if (profile?.role !== "admin") return Response.json({ error: "Доступ только администрации." }, { status: 403, headers: cors });
 
     const body = await req.json();
+    if (body.action === "list_groups") {
+      const { data, error } = await admin.from("class_groups").select("id,name").order("name");
+      if (error) throw error;
+      return Response.json({ groups: data || [] }, { headers: cors });
+    }
     if (body.action === "create_group") {
       const name = String(body.name || "").trim();
       if (!name) throw new Error("Введите название класса.");
