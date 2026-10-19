@@ -30,6 +30,7 @@ create unique index one_active_request_per_slot on public.consultation_bookings(
 drop policy if exists "requesters book consultations" on public.consultation_bookings;
 drop policy if exists "teachers manage consultations" on public.consultation_bookings;
 revoke insert,update,delete on public.consultation_bookings from authenticated,anon;
+grant select on public.consultation_bookings to authenticated;
 
 create function public.available_consultation_slots(p_teacher uuid)
 returns table(id uuid,starts_at timestamptz,ends_at timestamptz)
